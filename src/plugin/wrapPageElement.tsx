@@ -3,7 +3,7 @@ import {withPrefix, WrapPageElementBrowserArgs} from 'gatsby';
 // @ts-ignore
 import browserLang from 'browser-lang';
 import {I18NextContext, LANGUAGE_KEY, PageContext, PluginOptions, LocaleNode} from '../types';
-import i18next, {i18n as I18n} from 'i18next';
+import i18next, {i18n as I18n, Resource} from 'i18next';
 import {I18nextProvider} from 'react-i18next';
 import {I18nextContext} from '../i18nextContext';
 import outdent from 'outdent';
@@ -74,9 +74,9 @@ export const wrapPageElement = (
   if (languages.length > 1 && localeNodes.length === 0 && process.env.NODE_ENV === 'development') {
     console.error(
       outdent`
-      No translations were found in "${localeJsonNodeName}" key for "${originalPath}". 
+      No translations were found in "${localeJsonNodeName}" key for "${originalPath}".
       You need to add a graphql query to every page like this:
-      
+
       export const query = graphql\`
         query($language: String!) {
           ${localeJsonNodeName}: allLocale(language: {eq: $language}}) {
@@ -105,6 +105,12 @@ export const wrapPageElement = (
 
   const i18n = i18next.createInstance();
 
+  const resources: Resource = localeNodes.reduce((res: Resource, {node}) => {
+    const parsedData = JSON.parse(node.data);
+    res[node.language] = {[node.ns]: parsedData};
+    return res;
+  }, {});
+
   i18n.init({
     ...i18nextOptions,
     lng: language,
@@ -113,12 +119,8 @@ export const wrapPageElement = (
     fallbackNS,
     react: {
       useSuspense: false
-    }
-  });
-
-  localeNodes.forEach(({node}) => {
-    const parsedData = JSON.parse(node.data);
-    i18n.addResourceBundle(node.language, node.ns, parsedData);
+    },
+    resources
   });
 
   if (i18n.language !== language) {
