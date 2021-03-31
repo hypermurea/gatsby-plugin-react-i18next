@@ -107,6 +107,8 @@ export const wrapPageElement = (
 
   const resources: Resource = localeNodes.reduce((res: Resource, {node}) => {
     const parsedData = JSON.parse(node.data);
+    console.info('language:' + node.language);
+    console.info('data: ' + JSON.stringify(node.data, null, 4));
     res[node.language] = {[node.ns]: parsedData};
     return res;
   }, {});
